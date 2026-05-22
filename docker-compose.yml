@@ -1,0 +1,57 @@
+
+
+services:
+  # 1. Dịch vụ Cơ sở dữ liệu
+  du-lieu-sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: may-chu-du-lieu-sql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Password123
+      - MSSQL_PID=Developer
+    ports:
+      - "1434:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  # 2. Dịch vụ API
+  api-ghi-danh:
+    build: ./QlyDkyHoc.API
+    image: hinh-anh-api-dang-ky
+    container_name: ung-dung-api-ghi-danh
+    depends_on:
+      - du-lieu-sql
+    ports:
+      - "5052:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=du-lieu-sql;Database=QlyDkyHoc;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=True
+
+  # 3. Dịch vụ Frontend (Đã sửa lại Volume ở đây)
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: giao-dien-web-react
+    ports:
+     - "3000:3000" # Đổi lại cổng 3000 để chạy chế độ Dev
+    # 👉 THÊM KHỐI DEVELOP DƯỚI ĐÂY
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src # Khi em sửa file trong src
+          target: /app/src     # Nó sẽ lập tức bay vào trong Docker
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./frontend/package.json # Nếu em cài thêm thư viện mới
+          # Docker sẽ tự build lại từ đầu để cài thư viện đó
+    depends_on:
+      - api-ghi-danh
+    # 👉 ĐÂY LÀ CHỖ CẦN SỬA: Đưa volume vào trong dịch vụ frontend
+    volumes:
+  
+      - /app/node_modules
+
+# 4. KHAI BÁO VOLUME TOÀN CỤC (Chỉ để tên ổ đĩa ảo)
+volumes:
+  sql_data:
