@@ -40,23 +40,24 @@ export default function LichKhaiGiangPage() {
     const user = JSON.parse(userString);
 
     try {
-      const response = await fetch('http://localhost:5052/api/Dangky/GhiDanh', {
+      // Xóa chữ /GhiDanh đi nhé
+      const response = await fetch('http://localhost:5052/api/DangKy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          mahv: user.mahv, // Lấy mã học viên từ local sau khi login
-          malop: maLop    // Lấy mã lớp từ dòng đang bấm
-        }),
+  mahv: user.mahv, 
+  malop: maLop 
+}),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         alert("🎉 " + data.message);
-        // Sau khi ghi danh thành công, chuyển sang trang học phí
         navigate('/hocphi'); 
       } else {
-        alert("⚠️ " + data.message);
+        // 👉 Đề phòng data.message không tồn tại thì lấy data.title
+        alert("⚠️ " + (data.message || data.title || "Lỗi không xác định từ Server!"));
       }
     } catch (error) {
       console.error("Lỗi:", error);
@@ -116,7 +117,8 @@ export default function LichKhaiGiangPage() {
                   const buoi = lop.buoiHoc || "Chưa xếp";
                   const gio = lop.gioHoc || "Chưa xếp";
                   const tinhTrang = lop.tinhTrang || "Đang tuyển";
-                  const maLop = lop.malop; // 4. BIẾN QUAN TRỌNG ĐỂ GHI DANH
+                  // Đổi lop.malop thành lop.maLop 
+                  const maLop = lop.maLop;
 
                   return (
                     <tr key={index}>

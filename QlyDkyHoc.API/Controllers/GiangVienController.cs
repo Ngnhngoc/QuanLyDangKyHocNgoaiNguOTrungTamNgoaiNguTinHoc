@@ -86,15 +86,30 @@ namespace QlyDkyHoc.API.Controllers
         }
 
         // 5. DELETE: api/GiangVien/{id} (Xóa)
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteGiangVien(string id)
-        {
-            var gv = await _context.Giangviens.FindAsync(id);
-            if (gv == null) return NotFound("Không tìm thấy giảng viên.");
+[HttpDelete("{id}")]
+public async Task<IActionResult> DeleteGiangVien(string id)
+{
+    var gv = await _context.Giangviens.FindAsync(id);
+    if (gv == null) return NotFound(new { message = "Không tìm thấy giảng viên." });
 
-            _context.Giangviens.Remove(gv);
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Đã xóa giảng viên thành công." });
-        }
+    try
+    {
+        // Thử xóa Giảng viên
+        _context.Giangviens.Remove(gv);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã xóa giảng viên thành công." });
+    }
+    catch (DbUpdateException)
+    {
+        // SQL Server chặn lại vì Giảng viên đang có khóa ngoại dính với Lớp học
+        // Trả về mã lỗi 409 (Conflict) cùng lời nhắn đàng hoàng
+        return StatusCode(409, new { message = "Không thể xóa! Giảng viên này đang được phân công giảng dạy." });
+    }
+    catch (Exception ex)
+    {
+        // Bắt các lỗi hệ thống khác
+        return StatusCode(500, new { message = $"Lỗi hệ thống: {ex.Message}" });
+    }
+}
     }
 }

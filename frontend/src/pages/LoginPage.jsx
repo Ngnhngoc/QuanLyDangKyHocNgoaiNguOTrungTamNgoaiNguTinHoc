@@ -4,42 +4,48 @@ import { useNavigate } from 'react-router-dom';
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  // Thêm state để biết đang chọn đăng nhập kiểu gì
+  const [vaiTro, setVaiTro] = useState('hocvien'); 
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     
+    // Tùy theo vai trò mà gọi API khác nhau
+    const apiUrl = vaiTro === 'hocvien' 
+        ? 'http://localhost:5052/api/Hocvien/login' 
+        : 'http://localhost:5052/api/Nhanvien/login'; // Gọi API Admin vừa viết
+
     try {
-      // Gọi API Đăng nhập thật từ Backend (nhớ check port 5052 có đúng máy em không nhé)
-      const response = await fetch('http://localhost:5052/api/Hocvien/login', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          username: username, 
-          password: password 
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
       });
 
-      // Nếu API trả về thành công (Code 200)
       if (response.ok) {
         const data = await response.json();
         
-        // Lưu thông tin học viên thực tế từ SQL Server trả về vào localStorage
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
-        alert(data.message); // Hiển thị "Đăng nhập thành công!"
-        navigate('/');
-        window.location.reload(); 
+        // NẾU LÀ ADMIN
+        if (vaiTro === 'admin') {
+            localStorage.setItem('admin_user', JSON.stringify(data.user));
+            alert(data.message);
+            navigate('/admin'); // Đá thẳng vào trang Admin
+            window.location.reload();
+        } 
+        // NẾU LÀ HỌC VIÊN
+        else {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            alert(data.message);
+            navigate('/'); // Đá về trang chủ
+            window.location.reload();
+        }
       } else {
-        // Nếu API trả về lỗi (Code 400, 401)
         const errorData = await response.json();
-        alert(errorData.message || "Tên đăng nhập hoặc mật khẩu không đúng!");
+        alert("⛔ " + (errorData.message || "Tên đăng nhập hoặc mật khẩu không đúng!"));
       }
     } catch (error) {
-      console.error("Lỗi:", error);
-      alert("Không thể kết nối đến Backend Server! (Có thể do lỗi CORS hoặc API chưa chạy)");
+      alert("Không kết nối được với máy chủ!");
     }
   };
 
@@ -50,25 +56,34 @@ export default function LoginPage() {
           <div className="card shadow-lg border-0 rounded-4 p-4">
             <div className="card-body">
               <h2 className="text-center fw-bold mb-4">ĐĂNG NHẬP</h2>
+              
+              {/* CHỌN VAI TRÒ (Học viên hay Admin) */}
+              <div className="d-flex justify-content-center gap-3 mb-4">
+                <div className="form-check">
+                  <input className="form-check-input" type="radio" name="role" id="roleHocVien" 
+                    checked={vaiTro === 'hocvien'} onChange={() => setVaiTro('hocvien')} />
+                  <label className="form-check-label fw-bold text-primary" htmlFor="roleHocVien">Học viên</label>
+                </div>
+                <div className="form-check">
+                  <input className="form-check-input" type="radio" name="role" id="roleAdmin" 
+                    checked={vaiTro === 'admin'} onChange={() => setVaiTro('admin')} />
+                  <label className="form-check-label fw-bold text-danger" htmlFor="roleAdmin">Quản trị viên</label>
+                </div>
+              </div>
+
               <form onSubmit={handleLogin}>
                 <div className="mb-3">
-                  <label className="form-label fw-semibold">Tên đăng nhập (Mã HV)</label>
-                  <input 
-                    type="text" className="form-control rounded-pill" 
-                    value={username} onChange={(e) => setUsername(e.target.value)} 
-                    placeholder="VD: HV02" required
-                  />
+                  <label className="form-label fw-semibold">Tài khoản</label>
+                  <input type="text" className="form-control rounded-pill" 
+                    value={username} onChange={(e) => setUsername(e.target.value)} required />
                 </div>
                 <div className="mb-4">
                   <label className="form-label fw-semibold">Mật khẩu</label>
-                  <input 
-                    type="password" className="form-control rounded-pill" 
-                    value={password} onChange={(e) => setPassword(e.target.value)} 
-                    placeholder="Nhập mật khẩu..." required
-                  />
+                  <input type="password" className="form-control rounded-pill" 
+                    value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
-                <button type="submit" className="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm">
-                  ĐĂNG NHẬP NGAY
+                <button type="submit" className={`btn w-100 rounded-pill py-2 fw-bold text-white shadow-sm ${vaiTro === 'admin' ? 'btn-danger' : 'btn-primary'}`}>
+                  {vaiTro === 'admin' ? 'VÀO QUẢN TRỊ' : 'ĐĂNG NHẬP NGAY'}
                 </button>
               </form>
             </div>

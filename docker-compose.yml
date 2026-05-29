@@ -1,5 +1,3 @@
-
-
 services:
   # 1. Dịch vụ Cơ sở dữ liệu
   du-lieu-sql:
@@ -26,32 +24,26 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Server=du-lieu-sql;Database=QlyDkyHoc;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=True
 
-  # 3. Dịch vụ Frontend (Đã sửa lại Volume ở đây)
+  # 3. Dịch vụ Frontend (Đã dọn dẹp sạch sẽ, xài watch chuẩn bài)
   frontend:
     build: 
       context: ./frontend
       dockerfile: Dockerfile
     container_name: giao-dien-web-react
     ports:
-     - "3000:3000" # Đổi lại cổng 3000 để chạy chế độ Dev
-    # 👉 THÊM KHỐI DEVELOP DƯỚI ĐÂY
+     - "3000:3000"
     develop:
       watch:
         - action: sync
-          path: ./frontend/src # Khi em sửa file trong src
-          target: /app/src     # Nó sẽ lập tức bay vào trong Docker
+          path: ./frontend/src 
+          target: /app/src     
           ignore:
             - node_modules/
         - action: rebuild
-          path: ./frontend/package.json # Nếu em cài thêm thư viện mới
-          # Docker sẽ tự build lại từ đầu để cài thư viện đó
+          path: ./frontend/package.json 
     depends_on:
       - api-ghi-danh
-    # 👉 ĐÂY LÀ CHỖ CẦN SỬA: Đưa volume vào trong dịch vụ frontend
-    volumes:
-  
-      - /app/node_modules
 
-# 4. KHAI BÁO VOLUME TOÀN CỤC (Chỉ để tên ổ đĩa ảo)
+# 4. KHAI BÁO VOLUME TOÀN CỤC
 volumes:
   sql_data:
