@@ -85,16 +85,31 @@ public async Task<IActionResult> UpdateDanhMuc(string id, [FromBody] Danhmucnn d
 }
 
         // DELETE: api/danhmucnn/{id} (Xóa)
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDanhMuc(string id)
-        {
-            var danhMuc = await _context.Danhmucnns.FindAsync(id);
-            if (danhMuc == null) return NotFound("Không tìm thấy danh mục.");
+[HttpDelete("{id}")]
+public async Task<IActionResult> DeleteDanhMuc(string id)
+{
+    // 1. Tìm ngôn ngữ cần xóa
+    var danhMuc = await _context.Danhmucnns.FindAsync(id);
+    if (danhMuc == null) return NotFound("Không tìm thấy danh mục.");
 
-            _context.Danhmucnns.Remove(danhMuc);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Xóa danh mục thành công!" });
-        }
+    try
+    {
+        // 2. Thử xóa
+        _context.Danhmucnns.Remove(danhMuc);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Xóa danh mục thành công!" });
+    }
+    catch (DbUpdateException) 
+    {
+        // 3. Bắt lỗi nếu dính Khóa Ngoại (đang có khóa học dùng ngôn ngữ này)
+        // Trả về mã lỗi 409 (Conflict) cùng lời nhắn đàng hoàng
+        return StatusCode(409, new { message = "Không thể xóa! Ngôn ngữ này đang có khóa học hoạt động." });
+    }
+    catch (Exception ex)
+    {
+        // Lỗi khác
+        return StatusCode(500, new { message = $"Lỗi hệ thống: {ex.Message}" });
+    }
+}
     }
 }

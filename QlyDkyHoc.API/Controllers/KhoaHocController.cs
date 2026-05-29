@@ -25,6 +25,7 @@ namespace QlyDkyHoc.API.Controllers
                                          {
                                              maKH = kh.Makh,
                                              tenKH = kh.Tenkh,
+                                             maDanhMuc = kh.Madanhmuc,
                                              danhMuc = dm.Tendanhmuc, // Lấy tên ngôn ngữ thay vì mã
                                              // Xử lý định dạng ngày tháng để React dễ đọc
                                              ngayBD = kh.Ngaybdau.HasValue ? kh.Ngaybdau.Value.ToString("yyyy-MM-dd") : null,
@@ -33,6 +34,7 @@ namespace QlyDkyHoc.API.Controllers
                                              hocPhi = kh.Hocphi,
                                              moTa = kh.Mota
                                          }).ToListAsync();
+                                         
 
             if (!danhSachKhoaHoc.Any())
             {
@@ -96,16 +98,27 @@ public async Task<IActionResult> AddKhoaHoc([FromBody] Khoahoc khoaHoc)
         }
 
         // DELETE: api/khoahoc/{id} (Xóa)
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteKhoaHoc(string id)
-        {
-            var khoaHoc = await _context.Khoahocs.FindAsync(id);
-            if (khoaHoc == null) return NotFound("Không tìm thấy khóa học.");
+[HttpDelete("{id}")]
+public async Task<IActionResult> DeleteKhoaHoc(string id)
+{
+    var khoaHoc = await _context.Khoahocs.FindAsync(id);
+    if (khoaHoc == null) return NotFound(new { message = "Không tìm thấy khóa học." });
 
-            _context.Khoahocs.Remove(khoaHoc);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Xóa khóa học thành công!" });
-        }
+    try
+    {
+        _context.Khoahocs.Remove(khoaHoc);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Xóa khóa học thành công!" });
+    }
+    catch (DbUpdateException)
+    {
+        // SQL Server giương cờ báo lỗi Khóa Ngoại (đang có lớp học dính tới khóa này)
+        return StatusCode(409, new { message = "Không thể xóa! Khóa học này đang có Lớp học hoạt động." });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { message = $"Lỗi hệ thống: {ex.Message}" });
+    }
+}
     }
 }
