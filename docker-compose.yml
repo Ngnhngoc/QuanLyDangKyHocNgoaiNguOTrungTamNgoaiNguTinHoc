@@ -1,0 +1,55 @@
+services:
+  # 1. Dịch vụ Cơ sở dữ liệu
+  du-lieu-sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: may-chu-du-lieu-sql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Password123
+      - MSSQL_PID=Developer
+    ports:
+      - "1435:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  # 2. Dịch vụ API
+  api-ghi-danh:
+    build: ./QlyDkyHoc.API
+    image: hinh-anh-api-dang-ky
+    container_name: ung-dung-api-ghi-danh
+    depends_on:
+      - du-lieu-sql
+    ports:
+      - "5052:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=du-lieu-sql;Database=QlyDkyHoc;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=True;MultipleActiveResultSets=True;
+
+  # 3. Dịch vụ Frontend (Đã dọn dẹp sạch sẽ, xài watch chuẩn bài)
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: giao-dien-web-react
+    ports:
+     - "3000:3000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3000
+      - WDS_SOCKET_PORT=3000
+      - REACT_APP_API_BASE_URL=http://localhost:5052/api
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src 
+          target: /app/src     
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./frontend/package.json 
+    depends_on:
+      - api-ghi-danh
+
+# 4. KHAI BÁO VOLUME TOÀN CỤC
+volumes:
+  sql_data:

@@ -1,0 +1,14 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Open danh-sach.html",
+            "file": "d:\\nọc nọc\\HKII_25_26\\CNPM_ThayDuong\\QlyDkyHoc_System\\QlyDkyHoc.Client\\danh-sach.html"
+        }
+    ]
+}
